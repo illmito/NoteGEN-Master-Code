@@ -265,13 +265,13 @@ def show_success_label():
 
 
 # Function to hide the "Successfully Saved" label
-def hide_success_label():
+def hide_success_label(): 
     success_label.place_forget()
 
 
 # Function to confirm exit
 def confirm_exit():
-    if messagebox.askokcancel("Quit",  "Any unsaved work will be lost\n\nDo you want to continue?"):
+    if messagebox.askokcancel("Quit", "Any unsaved notes will be lost"):
         root.destroy()  # Quit the application if the user confirms
 
 
@@ -281,17 +281,17 @@ def open_about_window():
     about_window.title("About - NoteGEN")
     about_window.geometry("300x280")
     
-    label1 = ttk.Label(about_window, text="NoteGEN v3.0", font=("Arial", 12, "bold"))
-    label1.pack(pady=(5, 10))  # Add padding to the first label
+    label1 = ttk.Label(about_window, text="NoteGen v3.1", font=("Arial", 12, "bold"))
+    label1.pack(pady=(15, 20))  # Add padding to the first label
 
     label5 = ttk.Label(about_window, 
-                       text="Ctrl + H : Opens History \nCtrl + E : Opens Email Templates\nCtrl + S : Save Note\n", 
+                       text="Ctrl + H : open History \nCtrl + E : open Email Templates\nCtrl + S : Save Note\nCtrl + Z : Undo type", 
                        font=("Arial", 10))  # Slightly larger font
-    label5.pack(pady=(0, 5))  # Add bottom padding
+    label5.pack(pady=(0, 10))  # Add bottom padding
 
     emaildesc = ttk.Label(about_window, text="Email Templates:", font=("Arial", 10, "bold"))  # Slightly larger font
-    emaildesc.pack(pady=(0, 0), anchor="center")  # Add bottom padding
-    emaildesc_info = ttk.Label(about_window, text="Set a Default Email Signature\nplace signature on top of list.", font=("Arial", 8,))  # Slightly larger font
+    emaildesc.pack(pady=(0, 5), anchor="center")  # Add bottom padding
+    emaildesc_info = ttk.Label(about_window, text=f"Rename your Default Email Signature to '1'\n.", font=("Arial", 9,))  # Slightly larger font
     emaildesc_info.pack(pady=(0, 5), anchor="center")  # Add bottom padding
 #:\n\nPlease ensure a default Email Signature is set and on the top of the list.
 
@@ -300,8 +300,8 @@ def open_about_window():
     label3.pack(pady=(10, 10))  # Add bottom padding
 
    
-    close_button = ttk.Button(about_window, text="sure", command=about_window.destroy)
-    close_button.pack(pady=10)
+    close_button = ttk.Button(about_window, text="Close", command=about_window.destroy)
+    close_button.pack(pady=5, padx=5, side="bottom" )
     close_button.focus_force()
     #function that allows to press escape to close window.
     def close_window(event=None):
@@ -341,8 +341,9 @@ fmenu = tk.Menu(root)
 root.config(menu=menu)
 
 file_menu = tk.Menu(menu, tearoff=0)
-file_menu.add_command(label="About", command=open_about_window)
-file_menu.add_cascade(menu="disabled")
+
+file_menu.add_command(label="About NoteGen", command=open_about_window, )
+file_menu.add_cascade(menu="disabled", state="disabled")
 file_menu.add_separator()
 file_menu.add_command(label="Exit", command=confirm_exit) 
 
@@ -630,19 +631,74 @@ def enable_undo_for_entry(widget):
     widget.bind("<Control-z>", undo_action)
 
 
-# For Entry widgets
-enable_undo_for_entry(reference_number_entry_entry)
-enable_undo_for_entry(site_contact_entry)
-enable_undo_for_entry(contractor_entry)
+def enable_undo_for_entry(widget):
+    """Enable undo functionality for Entry widgets and ensure update_note works."""
+    undo_stack = [widget.get()]  # Initialize undo stack with the current content
 
-# For Text widgets
-enable_undo_for_text(note_entry)
-enable_undo_for_text(note_output)
+    def save_state(*args):
+        """Save the current state to the undo stack."""
+        if not undo_stack or undo_stack[-1] != widget.get():
+            undo_stack.append(widget.get())
 
-# Enable undo for Entry widget
-enable_undo_for_entry(reference_number_entry_entry)
+    def undo_action(event=None):
+        """Perform the undo action."""
+        if len(undo_stack) > 1:
+            undo_stack.pop()
+            previous_value = undo_stack[-1]
+            widget.delete(0, tk.END)
+            widget.insert(0, previous_value)
+
+    def combined_action(event=None):
+        """Combine save_state and update_note."""
+        save_state()  # Save state for undo
+        update_note()  # Update the note dynamically
+
+    # Bind events to track changes and handle undo
+    widget.bind("<KeyRelease>", combined_action)  # Update note and track undo
+    widget.bind("<Control-z>", undo_action)  # Undo action
 
 
+
+
+
+
+
+def create_context_menu(widget):
+    """Create a right-click context menu for the widget."""
+    context_menu = tk.Menu(widget, tearoff=0)
+
+    def cut():
+        widget.event_generate("<<Cut>>")  # Generate the Cut event
+        update_note()  # Ensure the note updates dynamically after the operation
+
+    def copy():
+        widget.event_generate("<<Copy>>")  # Generate the Copy event
+
+    def paste():
+        widget.event_generate("<<Paste>>")  # Generate the Paste event
+        update_note()  # Ensure the note updates dynamically after the operation
+
+    # Add menu options
+    context_menu.add_command(label="Cut", command=cut)
+    context_menu.add_command(label="Copy", command=copy)
+    context_menu.add_command(label="Paste", command=paste)
+
+    # Bind right-click to show the context menu
+    widget.bind("<Button-3>", lambda event: context_menu.post(event.x_root, event.y_root))
+
+    # Hide the context menu on any other action
+    widget.bind("<FocusOut>", lambda event: context_menu.unpost())
+
+
+
+# Apply context menu to Entry widgets
+create_context_menu(reference_number_entry_entry)
+create_context_menu(site_contact_entry)
+create_context_menu(contractor_entry)
+create_context_menu(note_output)
+
+# Apply context menu to Text widgets
+create_context_menu(note_entry)
 
 
 # Create the combobox for Reason Note
@@ -663,8 +719,32 @@ priority_var.trace_add("write", toggle_reason_combobox)
 
 
 
+# Apply context menu to Entry widgets (cut copy paste)
+create_context_menu(reference_number_entry_entry)
+create_context_menu(site_contact_entry)
+create_context_menu(contractor_entry)
+create_context_menu(note_output)
+create_context_menu(note_entry)
+create_context_menu(reason_note_menu)
 
+
+
+# For Entry widgets ( control z)
+enable_undo_for_entry(reference_number_entry_entry)
+enable_undo_for_entry(site_contact_entry)
+enable_undo_for_entry(contractor_entry)
+
+# For Text widgets
+enable_undo_for_text(note_entry)
+enable_undo_for_text(note_output)
+
+# Enable undo for Entry widget
+enable_undo_for_entry(reference_number_entry_entry)
+enable_undo_for_entry(reason_note_menu)
 start_tray_icon()
+
+
+
 
 root.mainloop()
 

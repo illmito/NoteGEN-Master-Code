@@ -13,53 +13,49 @@ class EmailTab(ttk.Frame):
         self.grid_columnconfigure(0, weight=1)
         self.grid_columnconfigure(1, weight=1)
 
-
-        # self.task_widgets['cc_entry'] = ""
-
-
         # Task Selection Frame
-        self.task_selection_frame = ttk.LabelFrame(self, text="Task Selection", relief="groove", borderwidth=2)
-        self.task_selection_frame.grid(row=0, column=0, padx=10, pady=10, sticky="nwe", columnspan=1)
+        self.task_selection_frame = ttk.LabelFrame(self, relief="groove", borderwidth=2,)
+        self.task_selection_frame.grid(row=0, column=0, padx=10, pady=10, sticky="ew", columnspan=1)
 
-        ttk.Label(self.task_selection_frame, text="Task:").grid(row=0, column=0, sticky="w", padx=10, pady=10)
+        ttk.Label(self.task_selection_frame, text="Email:").grid(row=0, column=0, sticky="ew", padx=20, pady=10)
         self.task_var = tk.StringVar()
         self.task_combobox = ttk.Combobox(
             self.task_selection_frame, textvariable=self.task_var, state="readonly",
-            values=["Leased Property", "Waste Management", "Cancellation Request"], width=45
+            values=["Leased Property", "Waste Management", "Cancellation Request", ], width=50, 
         )
-        self.task_combobox.grid(row=0, column=1, padx=10, pady=10)
-        self.task_combobox.set("Select Template")
+        self.task_combobox.grid(row=0, column=1, padx=10, pady=10, sticky="ew", columnspan=2)
+        self.task_combobox.set("Select Email Template")
         self.task_combobox.bind("<<ComboboxSelected>>", self.display_task_widgets)
 
         # Task Widget Frame
-        self.task_frame = ttk.LabelFrame(self, text="Email Template", relief="groove", borderwidth=2, )
+        self.task_frame = ttk.LabelFrame(self, text="Email Template", relief="groove", borderwidth=2)
         self.task_frame.grid(row=1, column=0, padx=10, pady=10, sticky="nwe", columnspan=1)
-
-        # # Attachment Frame
-        # self.attachment_frame = ttk.LabelFrame(self, text="Attachments", relief="groove", borderwidth=2)
-        # self.attachment_frame.grid(row=2, column=0, padx=10, pady=10, sticky="nwe")
-
-        # self.attachment_label = ttk.Label(self.attachment_frame, text="No attachments added.", anchor="w")
-        # self.attachment_label.grid(row=0, column=0, padx=5, pady=5, sticky="w")
-
-        # self.attach_button = ttk.Button(self.attachment_frame, text="Add Attachment", command=self.add_attachment)
-        # self.attach_button.grid(row=1, column=0, padx=5, pady=10, sticky="w")
 
         # Button Frame
         self.button_frame = ttk.Frame(self)
-        self.button_frame.grid(row=3, column=0, padx=10, pady=20, sticky="e",)
+        self.button_frame.grid(row=3, column=0, padx=10, pady=20, sticky="e")
 
-        # self.ready_button = ttk.Button(self.button_frame, text="Ready")
- 
+    def add_context_menu(self, widget):
+        """Add a context menu with Cut, Copy, and Paste to a widget."""
+        context_menu = tk.Menu(widget, tearoff=0)
 
-        # self.grid_columnconfigure(0, weight=1)
-        # self.grid_rowconfigure(0, weight=1)
+        def cut():
+            widget.event_generate("<<Cut>>")
 
-    def add_attachment(self):
-        selected_file = filedialog.askopenfilename(title="Select File to Attach")
-        if selected_file:
-            self.attachments_list.append(selected_file)
-            self.attachment_label.config(text="\n".join(self.attachments_list))
+        def copy():
+            widget.event_generate("<<Copy>>")
+
+        def paste():
+            widget.event_generate("<<Paste>>")
+
+        # Add options to the context menu
+        context_menu.add_command(label="Cut", command=cut)
+        context_menu.add_command(label="Copy", command=copy)
+        context_menu.add_command(label="Paste", command=paste)
+
+        # Bind the context menu to the widget
+        widget.bind("<Button-3>", lambda event: context_menu.post(event.x_root, event.y_root))
+        widget.bind("<FocusOut>", lambda event: context_menu.unpost())
 
     def display_task_widgets(self, event=None):
         task = self.task_var.get()
@@ -71,14 +67,15 @@ class EmailTab(ttk.Frame):
             self.create_leased_property_widgets()
         elif task == "Waste Management":
             self.create_waste_management_widgets()
-        elif task == "Blank Email":
-            self.create_blank_email_widgets()
         elif task == "Cancellation Request":
             self.create_cancellation_request_widgets()
+        elif task == "Blank Email":
+            self.create_blank_email_widgets()
 
-
-
-
+        # Add context menu to all relevant widgets
+        for widget in self.task_widgets.values():
+            if isinstance(widget, (tk.Entry, tk.Text, ttk.Combobox)):
+                self.add_context_menu(widget)
 
 
     def create_cancellation_request_widgets(self):
@@ -167,7 +164,7 @@ class EmailTab(ttk.Frame):
             text="*Input Name of Person", 
             fg="dark red",  # Set text color to dark red
         )
-        self.task_widgets['requested_warning_label'].grid(row=5, column=1, padx=1, pady=5, sticky="e")
+        self.task_widgets['requested_warning_label'].grid(row=5, column=1, padx=185, pady=5,)
         self.task_widgets['requested_warning_label'].grid_remove()  # Hide initially
 
         # Function to handle selection changes in the combobox
@@ -212,7 +209,7 @@ class EmailTab(ttk.Frame):
             text="*Input Site Supervisor name", 
             fg="dark red",  # Set text color to dark red
         )
-        self.task_widgets['supervisor_warning_label'].grid(row=7, column=1, padx=1, pady=5, sticky="e")
+        self.task_widgets['supervisor_warning_label'].grid(row=7, column=1, padx=185, pady=5,)
         self.task_widgets['supervisor_warning_label'].grid_remove()  # Hide initially
 
         # Function to handle selection changes in the combobox
@@ -279,7 +276,8 @@ class EmailTab(ttk.Frame):
             text="Ready", 
             command=lambda: self.format_email("cancel"),
         )
-        self.ready_button.grid(row=0, column=0, padx=10, pady=5, sticky="e")
+
+        self.ready_button.grid(row=0, column=0, padx=10, pady=5, sticky="e", columnspan=2)
 
 
 
@@ -534,16 +532,6 @@ class EmailTab(ttk.Frame):
 
     
     
-    # clearing high to type into box
-    def clear_highlight(widget):
-        """Clears text selection and moves the cursor to the end for the given widget."""
-        # Get the widget's internal entry (focus_get() ensures we target the right element)
-        entry_widget = widget.master.focus_get()
-        if entry_widget and hasattr(entry_widget, 'selection_clear'):
-            entry_widget.selection_clear()  # Clear any text selection
-            entry_widget.icursor("end")  # Move the cursor to the end of the text
-
-
 
 
 
@@ -600,3 +588,7 @@ class EmailTab(ttk.Frame):
             self.task_selection_frame.focus_force()
         except Exception as e:
             messagebox.showerror("Error", f"Failed to create email: {str(e)}")
+
+
+
+    
