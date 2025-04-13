@@ -13,7 +13,9 @@ import threading
 from history_window import open_history_window
 from cx_window import WorkNotepad
 from email_window import EmailTab
+import getpass
 
+username = getpass.getuser()
 
 
 
@@ -108,14 +110,13 @@ def update_note(*args):
     generated_note = ""
     if reference_number_entry:
         generated_note += f"Reference No:   {reference_number_entry}\n"
-    if new_priority:
-        generated_note += f"New Priority:   {new_priority}\n"
     if site_contact:
         generated_note += f"Site Contact:   {site_contact}\n"
     if contractor:
         generated_note += f"Contractor:     {contractor}\n"
 
     actions = {
+        f"Priority Change, {new_priority}": new_priority,
         "Contacted": contacted_var.get(),
         "Dispatched": dispatched_var.get(),
         "Emailed": emailed_var.get(),
@@ -281,31 +282,89 @@ def confirm_exit():
 # info / about window
 def open_about_window():
     about_window = tk.Toplevel()
-    about_window.title("About - NoteGEN")
-    about_window.geometry("300x280")
-    
-    label1 = ttk.Label(about_window, text="NoteGen v4", font=("Arial", 12, "bold"))
-    label1.pack(pady=(15, 20))  # Add padding to the first label
+    about_window.title("About NoteGEN")
+    about_window.geometry("400x400")
+    about_window.configure(bg="#f4f4f4")
+    about_window.resizable(False, False)
+    about_window.grab_set()
 
-    label5 = ttk.Label(about_window, 
-                       text="Ctrl + H : Open History \nCtrl + E : Open Email Templates\nCtrl + S : Save Note\nCtrl + Z : Undo type", 
-                       font=("Arial", 10))  # Slightly larger font
-    label5.pack(pady=(0, 10))  # Add bottom padding
+    # Center the about window
+    about_window.update_idletasks()
+    x = (about_window.winfo_screenwidth() // 2) - (about_window.winfo_width() // 2)
+    y = (about_window.winfo_screenheight() // 2) - (about_window.winfo_height() // 2)
+    about_window.geometry(f"+{x}+{y}")
 
-    emaildesc = ttk.Label(about_window, text="Email Templates:", font=("Arial", 10, "bold"))  # Slightly larger font
-    emaildesc.pack(pady=(0, 5), anchor="center")  # Add bottom padding
-    emaildesc_info = ttk.Label(about_window, text=f"Rename your Default Email Signature to '1'\nTo ensure tempales are working properly", font=("Arial", 9,))  # Slightly larger font
-    emaildesc_info.pack(pady=(0, 5), anchor="center")  # Add bottom padding
-#:\n\nPlease ensure a default Email Signature is set and on the top of the list.
+    # --- Title ---
+    ttk.Label(
+        about_window,
+        text="NoteGEN v4",
+        font=("Segoe UI", 14, "bold"),
 
+        foreground="#333"
+    ).pack(pady=(20, 10))
 
-    label3 = ttk.Label(about_window, text="\u00A9 2025 Thomas Brayovic", font=("Arial", 8, "bold"))  # Slightly larger font
-    label3.pack(pady=(10, 10))  # Add bottom padding
+    # --- Section Header ---
+    ttk.Label(
+        about_window,
+        text="Keyboard Shortcuts",
+        font=("Segoe UI", 10, "bold"),
 
-   
+        foreground="#444"
+    ).pack(pady=(5, 10))
+
+    # --- Shortcuts List ---
+    ttk.Label(
+        about_window,
+        text="Ctrl + F : Follow Up Note\n"
+             "Ctrl + H : History\n"
+             "Ctrl + E : Email Templates\n"
+             "Ctrl + S : Save Note\n"
+             "Ctrl + Z : Undo typing",
+        font=("Segoe UI", 10),
+
+        foreground="#222",
+        justify="center"
+    ).pack(pady=(0, 20))
+
+    # --- Email Template Info Header ---
+    ttk.Label(
+        about_window,
+        text="Email Template Setup",
+        font=("Segoe UI", 10, "bold"),
+
+        foreground="#444"
+    ).pack(pady=(0, 10))
+
+    # --- Email Info Text ---
+    ttk.Label(
+        about_window,
+        text="Rename your default email signature to '1'\n"
+             "This ensures templates are working properly.",
+        font=("Segoe UI", 9),
+
+        foreground="#333",
+        justify="center"
+    ).pack(pady=(0, 20))
+
+    # --- Divider ---
+    ttk.Separator(about_window, orient="horizontal").pack(fill="x", padx=30, pady=(10, 20))
+
+    # --- Footer / Credits ---
+    ttk.Label(
+        about_window,
+        text="\u00A9 2025 Thomas Brayovic",
+        font=("Segoe UI", 8, "italic"),
+        background="#f4f4f4",
+        foreground="#888"
+    ).pack(pady=(5, 10))
+
+    # --- Close Button ---
     close_button = ttk.Button(about_window, text="Close", command=about_window.destroy)
-    close_button.pack(pady=5, padx=5, side="bottom" )
+    close_button.pack(pady=(5, 20))
     close_button.focus_force()
+
+    # --- ESC Key to Close ---
+    about_window.bind("<Escape>", lambda event: about_window.destroy())
     #function that allows to press escape to close window.
     def close_window(event=None):
         
@@ -317,8 +376,8 @@ def open_about_window():
 
 def startup_menu(root):
     menu_win = tk.Toplevel(root)
-    menu_win.title("Welcome to NoteGEN")
-    menu_win.geometry("320x180")
+    menu_win.title("NoteGEN")
+    menu_win.geometry("320x380")
     menu_win.resizable(False, False)
     menu_win.grab_set()
 
@@ -330,23 +389,91 @@ def startup_menu(root):
     y = (menu_win.winfo_screenheight() // 2) - (height // 2)
     menu_win.geometry(f"{width}x{height}+{x}+{y}")
 
-    # Labels and buttons
-    ttk.Label(menu_win, text="Choose your workspace", font=("Segoe UI", 12, "bold")).pack(pady=(20, 10))
-    ttk.Label(menu_win, text="Please select an option to proceed.", font=("Segoe UI", 10)).pack()
+    menu_win.update_idletasks()
+    x = (menu_win.winfo_screenwidth() // 2) - (menu_win.winfo_width() // 2)
+    y = (menu_win.winfo_screenheight() // 2) - (menu_win.winfo_height() // 2)
+    menu_win.geometry(f"+{x}+{y}")
 
-    ttk.Button(
+    # Style for buttons
+    style = ttk.Style()
+    style.theme_use("clam")
+    style.configure("Landing.TButton",
+                    font=("Segoe UI", 10, "bold"),
+                    foreground="white",
+                    background="#0078D7",
+                    padding=10)
+    style.map("Landing.TButton",
+              background=[("active", "#005A9E"), ("pressed", "#004A87")])
+
+    # --- Header/Icon ---
+    ttk.Label(
         menu_win,
-        text="Customer Experience",
-        width=25,
-        command=lambda: select_customer_experience(menu_win, root)
-    ).pack(pady=(15, 5))
+        text="📝",
+        font=("Segoe UI Emoji", 30),
+        background="#f4f4f4"
+    ).pack(pady=(15, 0))
 
+    # --- Title ---
+    ttk.Label(
+        menu_win,
+        text="Welcome to NoteGEN",
+        font=("Segoe UI", 16, "bold"),
+
+        foreground="#333"
+    ).pack(pady=(10, 5))
+
+    # --- Subtitle ---
+    ttk.Label(
+        menu_win,
+        text="Your dispatch & follow-up assistant",
+        font=("Segoe UI", 10),
+
+        foreground="#666"
+    ).pack(pady=(0, 10))
+
+    # --- Divider ---
+    ttk.Separator(menu_win, orient="horizontal").pack(fill="x", padx=30, pady=(10, 20))
+
+    # --- Buttons ---
     ttk.Button(
         menu_win,
         text="Resource Management",
         width=25,
+        style="Landing.TButton",
         command=lambda: select_resource_management(menu_win, root)
-    ).pack()
+    ).pack(pady=(10, 5))
+
+    ttk.Label(
+        menu_win,
+        text="or",
+        font=("Segoe UI", 9),
+
+        foreground="#aaa"
+    ).pack(pady=(5, 5))
+
+    ttk.Button(
+        menu_win,
+        text="Follow Up",
+        width=25,
+        style="Landing.TButton",
+        command=lambda: select_customer_experience(menu_win, root)
+    ).pack(pady=(5, 10))
+
+
+    # --- Footer: Logged-in info and version ---
+    ttk.Label(
+        menu_win,
+        text=f"User: {username}",
+        font=("Segoe UI", 9, "italic"),
+        foreground="#888"
+    ).pack(pady=(15, 2))
+
+    ttk.Label(
+        menu_win,
+        text="v4.01 - Build 2025.04",
+        font=("Segoe UI", 8),
+        foreground="#999"
+    ).pack(side="bottom", pady=(5, 10))
 
     # Add confirm on close
     def confirm_exit():
@@ -360,7 +487,7 @@ def startup_menu(root):
 def select_customer_experience(menu_win, root):
     menu_win.destroy()
     open_cx_notegen(root, lambda: startup_menu(root))
-    root.focus_force()
+    
 
 def select_resource_management(popup_window, root):
     popup_window.destroy()
@@ -404,23 +531,38 @@ root.config(menu=menu)
 fmenu = tk.Menu(root)
 root.config(menu=menu)
 
-
+style = ttk.Style()
+style.theme_use("vista")  # 'clam', 'alt', 'default', 'classic'
 
 
 
 file_menu = tk.Menu(menu, tearoff=0)
 
-file_menu.add_command(label="About NoteGen", command=open_about_window, )
+
+theme_menu = tk.Menu(file_menu, tearoff=0)
+theme_menu.add_command(label="Default", command=lambda: style.theme_use("vista"))
+theme_menu.add_command(label="xpnative", command=lambda: style.theme_use("xpnative"))
+theme_menu.add_command(label="Classic", command=lambda: style.theme_use("alt"))
+
+
+
+
+file_menu.add_command(label="About", command=open_about_window,)       
 file_menu.add_cascade(menu="disabled", state="disabled")
+file_menu.add_cascade(label="Change Theme", menu=theme_menu)
 file_menu.add_separator()
-file_menu.add_command(label="Exit", command=confirm_exit) 
+file_menu.add_command(label="Exit", command=confirm_exit, activebackground="red") 
+
+
+
+
 
 options_menu = tk.Menu(menu, tearoff=0)
-options_menu.add_command(label="Send An Email", command=lambda: open_email_window())
+options_menu.add_command(label="Send An Email", command=lambda: open_email_window(),accelerator="Ctrl+E")
 options_menu.add_separator()
-options_menu.add_command(label="Follow Up", command=lambda: open_cx_notegen_file_menu())
+options_menu.add_command(label="Follow Up", command=lambda: open_cx_notegen_file_menu(), accelerator="Ctrl+F")
 options_menu.add_separator()
-options_menu.add_command(label="History - CTRL-H", command=lambda: open_history_window(ttk.Frame))
+options_menu.add_command(label="History", command=lambda: open_history_window(ttk.Frame), accelerator="Ctrl+H")
 menu.add_cascade(label="File", menu=file_menu)
 menu.add_cascade(label="Options",menu=options_menu)
 
@@ -445,6 +587,8 @@ root.bind("<Control-S>", save_note)
 # Bind Ctrl+H to open the history window
 root.bind("<Control-h>", open_history_window)
 root.bind("<Control-H>", open_history_window)
+## Binds for Follow up short ct
+# Bind Ctrl+E to open the email window
 
 
 
@@ -474,7 +618,7 @@ contractor_entry.grid(row=3, column=1, padx=5, pady=5)
 contractor_entry.bind("<KeyRelease>", update_note)
 
 
-ttk.Label(input_frame,relief="flat", text="New/Changed Priority?", anchor="w").grid(row=0, column=1, sticky="w", padx=5, pady=0)
+ttk.Label(input_frame,relief="flat", text="New/Changed Priority", anchor="w").grid(row=0, column=1, sticky="w", padx=5, pady=0)
 priority_var = tk.StringVar()
 priority_options = ["", "P1 Emergency", "P2 Immediate", "P3 Urgent", "P3.5 Escalated Routine", "P4 Routine", "P5 Specific Date"]
 priority_menu = ttk.Combobox(input_frame, textvariable=priority_var, values=priority_options, width=33, state="readonly")
@@ -521,16 +665,19 @@ notes_frame.grid_columnconfigure(0, weight=1)
 reason_note_var = tk.StringVar()
 reason_note_var.trace_add("write", update_note)
 
-reason_note_options = [
-    "Cancellation Reason: Duplicate Request: <ref-number>",
-    "Cancellation Reason: No Longer Required",
-    "Cancellation Reason: Site Contact Advised",
-    "- - -",
+priority_note_options = [
+
     "Priority Change Reason: Non-Urgent",
     "Priority Change Reason: Site Contact Request",
     "Priority Change Reason: Unable to Allocate Resources.",
-    "",
+    
 
+]
+
+cancel_note_options = [
+    "Cancellation Reason: Duplicate Request: <ref-number>",
+    "Cancellation Reason: No Longer Required",
+    "Cancellation Reason: Site Contact Advised",
 ]
 
 
@@ -598,18 +745,18 @@ def toggle_reason_combobox(*args):
     # Disable Cancel if Priority is selected
     if priority_selected:
         cancelled_checkbox.config(state="disabled")
-        cancelled_var.set(False)  # Uncheck if previously selected
+        cancelled_var.set(False)
     else:
         cancelled_checkbox.config(state="normal")
 
     # Disable Priority if Cancel is selected
     if cancel_selected:
         priority_menu.config(state="disabled")
-        priority_var.set("")  # Clear priority selection if Cancel is selected
+        priority_var.set("")
     else:
         priority_menu.config(state="readonly")
 
-    # Show or hide the reason label based on conditions
+    # Logic for showing label and setting reason menu
     if cancel_selected and priority_selected:
         cancel_priority_warning_label.config(text="Cancel or Priority Change", foreground="dark red")
         cancel_priority_warning_label.place(x=30, y=200, anchor="w")
@@ -621,16 +768,21 @@ def toggle_reason_combobox(*args):
         cancel_priority_warning_label.place(x=30, y=200, anchor="w")
         reason_note_var.set("Cancellation Reason: ")
         reason_note_menu.config(state="normal")
-        
+        reason_note_menu['values'] = cancel_note_options  # 👈 Set cancel options
+
     elif priority_selected:
         cancel_priority_warning_label.config(text="Reason For Priority Change", foreground="dark red")
         cancel_priority_warning_label.place(x=30, y=200, anchor="w")
         reason_note_var.set("Priority Change Reason: ")
         reason_note_menu.config(state="normal")
+        reason_note_menu['values'] = priority_note_options  # 👈 Set priority options
+
     else:
         cancel_priority_warning_label.place_forget()
         reason_note_menu.config(state="disabled")
         reason_note_var.set("")
+        reason_note_menu['values'] = []  # Optional: clear values when neither selected
+
 
 
 
@@ -654,13 +806,15 @@ def open_email_window(event=None):
 def open_cx_notegen_file_menu(event=None):
     window = tk.Toplevel()
     WorkNotepad(window).pack(expand=True, fill="both")
-    window.title("CX NoteGEN")
+    window.title("Follow Up - NoteGEN")
 
+root.bind("<Control-f>", open_cx_notegen_file_menu)
+root.bind("<Control-F>", open_cx_notegen_file_menu)
 
 
 def open_cx_notegen(root, return_to_menu_callback):
     cx_window = tk.Toplevel(root)
-    cx_window.title("CX NoteGEN")
+    cx_window.title("Follow Up - NoteGEN")
     WorkNotepad(cx_window).pack(padx=10, pady=10)
 
     def confirm_exit():
@@ -678,6 +832,8 @@ def open_cx_notegen(root, return_to_menu_callback):
 # Bind Ctrl+E to open the email window
 root.bind("<Control-e>", open_email_window)
 root.bind("<Control-E>", open_email_window)
+
+
 
 
 
@@ -795,7 +951,13 @@ create_context_menu(note_entry)
 
 
 # Create the combobox for Reason Note
-reason_note_menu = ttk.Combobox(notes_frame, textvariable=reason_note_var, values=reason_note_options, width=52, state="disabled")
+reason_note_menu = ttk.Combobox(
+    notes_frame,
+    textvariable=reason_note_var,
+    values=[],  # ⬅ Start with empty, update via toggle_reason_combobox
+    width=52,
+    state="disabled"  # Start disabled, toggle it as needed
+)
 reason_note_menu.grid(row=1, column=0, padx=5, pady=5)
 
 # Set the default value to the placeholder
