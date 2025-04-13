@@ -160,10 +160,7 @@ class EmailTab(ttk.Frame):
 
         # Create a hidden label for the message
         self.task_widgets['requested_warning_label'] = tk.Label(
-            self.task_frame, 
-            text="*Input Name of Person", 
-            fg="dark red",  # Set text color to dark red
-        )
+        self.task_frame, text="*Input Name of Person", fg="dark red")
         self.task_widgets['requested_warning_label'].grid(row=5, column=1, padx=185, pady=5,)
         self.task_widgets['requested_warning_label'].grid_remove()  # Hide initially
 
@@ -374,7 +371,7 @@ class EmailTab(ttk.Frame):
         self.task_widgets['cc_label'] = ttk.Label(self.task_frame, text="CC:")
         self.task_widgets['cc_label'].grid(row=1, column=0, padx=10, pady=5, sticky="w")
         self.task_widgets['cc_entry'] = ttk.Entry(self.task_frame, width=50)
-        self.task_widgets['cc_entry'].insert(0, "Chloe.Barrett@ventia.com") 
+        self.task_widgets['cc_entry'].insert(0, "") 
         self.task_widgets['cc_entry'].config(state="disabled") # Default CC
         self.task_widgets['cc_entry'].grid(row=1, column=1, padx=10, pady=5, sticky="w")
 
@@ -404,7 +401,7 @@ class EmailTab(ttk.Frame):
 
         self.task_widgets['priority_entry'] = ttk.Combobox(
             self.task_frame,
-            values=["P1", "P2", "P3", "P3.5", "P4", "P5"],
+            values=["P1", "P2", "P3", "P4", "P5"],
             state="readonly",
             width=20,
         )

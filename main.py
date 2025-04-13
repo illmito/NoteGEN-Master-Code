@@ -5,15 +5,17 @@ from datetime import datetime
 import os
 import csv
 
-from email_window import EmailTab
-
-
 from pystray import Icon, Menu, MenuItem
 from PIL import Image, ImageDraw, ImageFont
 import threading
 
 # Import the history window functionality
 from history_window import open_history_window
+from cx_window import WorkNotepad
+from email_window import EmailTab
+
+
+
 
 
 
@@ -65,7 +67,8 @@ def start_tray_icon():
 
     # Define menu items for the tray icon
     menu = Menu(
-        MenuItem("Open", on_show_window),
+        MenuItem("Follow Up", open_cx_notegen_file_menu),
+        MenuItem("Dispatch", on_show_window),
         MenuItem("History", open_history_window),
         MenuItem("Email", open_email_window),
         MenuItem("Close", on_exit),
@@ -281,17 +284,17 @@ def open_about_window():
     about_window.title("About - NoteGEN")
     about_window.geometry("300x280")
     
-    label1 = ttk.Label(about_window, text="NoteGen v3.1", font=("Arial", 12, "bold"))
+    label1 = ttk.Label(about_window, text="NoteGen v4", font=("Arial", 12, "bold"))
     label1.pack(pady=(15, 20))  # Add padding to the first label
 
     label5 = ttk.Label(about_window, 
-                       text="Ctrl + H : open History \nCtrl + E : open Email Templates\nCtrl + S : Save Note\nCtrl + Z : Undo type", 
+                       text="Ctrl + H : Open History \nCtrl + E : Open Email Templates\nCtrl + S : Save Note\nCtrl + Z : Undo type", 
                        font=("Arial", 10))  # Slightly larger font
     label5.pack(pady=(0, 10))  # Add bottom padding
 
     emaildesc = ttk.Label(about_window, text="Email Templates:", font=("Arial", 10, "bold"))  # Slightly larger font
     emaildesc.pack(pady=(0, 5), anchor="center")  # Add bottom padding
-    emaildesc_info = ttk.Label(about_window, text=f"Rename your Default Email Signature to '1'\n.", font=("Arial", 9,))  # Slightly larger font
+    emaildesc_info = ttk.Label(about_window, text=f"Rename your Default Email Signature to '1'\nTo ensure tempales are working properly", font=("Arial", 9,))  # Slightly larger font
     emaildesc_info.pack(pady=(0, 5), anchor="center")  # Add bottom padding
 #:\n\nPlease ensure a default Email Signature is set and on the top of the list.
 
@@ -311,8 +314,69 @@ def open_about_window():
     about_window.bind("<Escape>", close_window )
 
 
+
+def startup_menu(root):
+    menu_win = tk.Toplevel(root)
+    menu_win.title("Welcome to NoteGEN")
+    menu_win.geometry("320x180")
+    menu_win.resizable(False, False)
+    menu_win.grab_set()
+
+    # Center the popup
+    menu_win.update_idletasks()
+    width = menu_win.winfo_width()
+    height = menu_win.winfo_height()
+    x = (menu_win.winfo_screenwidth() // 2) - (width // 2)
+    y = (menu_win.winfo_screenheight() // 2) - (height // 2)
+    menu_win.geometry(f"{width}x{height}+{x}+{y}")
+
+    # Labels and buttons
+    ttk.Label(menu_win, text="Choose your workspace", font=("Segoe UI", 12, "bold")).pack(pady=(20, 10))
+    ttk.Label(menu_win, text="Please select an option to proceed.", font=("Segoe UI", 10)).pack()
+
+    ttk.Button(
+        menu_win,
+        text="Customer Experience",
+        width=25,
+        command=lambda: select_customer_experience(menu_win, root)
+    ).pack(pady=(15, 5))
+
+    ttk.Button(
+        menu_win,
+        text="Resource Management",
+        width=25,
+        command=lambda: select_resource_management(menu_win, root)
+    ).pack()
+
+    # Add confirm on close
+    def confirm_exit():
+        if messagebox.askyesno("Exit Application", "Are you sure you want to close?"):
+            menu_win.destroy()
+            root.destroy()
+
+    menu_win.protocol("WM_DELETE_WINDOW", confirm_exit)
+
+
+def select_customer_experience(menu_win, root):
+    menu_win.destroy()
+    open_cx_notegen(root, lambda: startup_menu(root))
+    root.focus_force()
+
+def select_resource_management(popup_window, root):
+    popup_window.destroy()
+    root.deiconify()
+    root.lift()
+    root.focus_force()
+    
+
+
 # Root setup
 root = tk.Tk()
+
+root.withdraw()  # Hide root until choice is made
+startup_menu(root)
+
+
 root.title("NoteGen")
 root.geometry("520x480")
 root.resizable(True, True)
@@ -340,6 +404,10 @@ root.config(menu=menu)
 fmenu = tk.Menu(root)
 root.config(menu=menu)
 
+
+
+
+
 file_menu = tk.Menu(menu, tearoff=0)
 
 file_menu.add_command(label="About NoteGen", command=open_about_window, )
@@ -350,8 +418,9 @@ file_menu.add_command(label="Exit", command=confirm_exit)
 options_menu = tk.Menu(menu, tearoff=0)
 options_menu.add_command(label="Send An Email", command=lambda: open_email_window())
 options_menu.add_separator()
-options_menu.add_command(label="History", command=lambda: open_history_window(ttk.Frame))
-
+options_menu.add_command(label="Follow Up", command=lambda: open_cx_notegen_file_menu())
+options_menu.add_separator()
+options_menu.add_command(label="History - CTRL-H", command=lambda: open_history_window(ttk.Frame))
 menu.add_cascade(label="File", menu=file_menu)
 menu.add_cascade(label="Options",menu=options_menu)
 
@@ -405,7 +474,7 @@ contractor_entry.grid(row=3, column=1, padx=5, pady=5)
 contractor_entry.bind("<KeyRelease>", update_note)
 
 
-ttk.Label(input_frame,relief="flat", text="New Priority?", anchor="w").grid(row=0, column=1, sticky="w", padx=5, pady=0)
+ttk.Label(input_frame,relief="flat", text="New/Changed Priority?", anchor="w").grid(row=0, column=1, sticky="w", padx=5, pady=0)
 priority_var = tk.StringVar()
 priority_options = ["", "P1 Emergency", "P2 Immediate", "P3 Urgent", "P3.5 Escalated Routine", "P4 Routine", "P5 Specific Date"]
 priority_menu = ttk.Combobox(input_frame, textvariable=priority_var, values=priority_options, width=33, state="readonly")
@@ -470,7 +539,7 @@ reason_note_options = [
 # ttk.Label(notes_frame, text="Notes:", anchor="w").grid(row=2, column=0, sticky="w", padx=2, pady=2,)
 
 
-note_entry = tk.Text(notes_frame, width=41, height=9, wrap=tk.WORD, relief="flat")
+note_entry = tk.Text(notes_frame, width=41, height=8, wrap=tk.WORD, relief="flat")
 note_entry.grid(row=2, column=0, padx=5, pady=5)
 note_entry.bind("<KeyRelease>", update_note)
 
@@ -580,7 +649,31 @@ def open_email_window(event=None):
     window = tk.Toplevel()
     EmailTab(window).pack(expand=True, fill="both")
     window.title("EmailGEN")
-    window.geometry("520x860")
+
+
+def open_cx_notegen_file_menu(event=None):
+    window = tk.Toplevel()
+    WorkNotepad(window).pack(expand=True, fill="both")
+    window.title("CX NoteGEN")
+
+
+
+def open_cx_notegen(root, return_to_menu_callback):
+    cx_window = tk.Toplevel(root)
+    cx_window.title("CX NoteGEN")
+    WorkNotepad(cx_window).pack(padx=10, pady=10)
+
+    def confirm_exit():
+        if messagebox.askyesno("Exit Application", "Are you sure you want to close?"):
+            cx_window.destroy()
+            root.destroy()  # Exit the whole app
+
+    cx_window.protocol("WM_DELETE_WINDOW", confirm_exit)
+
+
+
+
+
 
 # Bind Ctrl+E to open the email window
 root.bind("<Control-e>", open_email_window)
@@ -759,5 +852,6 @@ root.mainloop()
 
 
 
-
 # pyinstaller -w --onefile main.py
+
+# pyinstaller -w --onefile --icon=icon.ico main.py
